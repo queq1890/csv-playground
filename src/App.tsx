@@ -1,35 +1,37 @@
 import React, { useCallback } from 'react';
 import Papa from 'papaparse';
-
-import Worker from './uniquenessValidator.worker';
+import { useUniquenessValidator } from './useWorker';
+import { Remote } from 'comlink';
+import { WorkerType } from './uniquenessValidator.worker';
 
 const is12DigitsNumeric = (value: string) => {
   return /^-?\d{12}$/.test(value);
 };
 
-const validateCSV = (csv: File) => {
-  let validIdArray: string[] = [];
-
+const validateCSV = async (csv: File, workerApi: Remote<WorkerType>) => {
   Papa.parse<string>(csv, {
-    chunk: (results, parser) => {
+    chunk: async (results, parser) => {
       const idArray = results.data.flat();
 
-      if (
-        idArray.some((id) => {
-          return !is12DigitsNumeric(id);
-
-          // return validIdArray.includes(id); // uniqueness validation
-        })
-      ) {
+      if (idArray.some((id) => !is12DigitsNumeric(id))) {
         console.log('invalid value detected!');
         parser.abort();
+        return;
       }
-      validIdArray = validIdArray.concat(idArray);
+
+      const isUnique = await workerApi.validate(idArray);
+
+      if (!isUnique) {
+        console.log('not unique value detected');
+        parser.abort();
+        return;
+      }
     },
-    complete: () => {
+    complete: async () => {
       console.log('complete');
-      console.log(validIdArray);
-      validIdArray = [];
+      console.log('for real');
+      console.log(await workerApi.validIdArray);
+      console.log('please resolve');
     },
     error: (error) => {
       console.log(error);
@@ -39,13 +41,14 @@ const validateCSV = (csv: File) => {
 };
 
 const App = () => {
+  const workerApi = useUniquenessValidator();
   const handleChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const csv = event.target.files?.[0];
       if (!csv) return;
-      validateCSV(csv);
+      validateCSV(csv, workerApi);
     },
-    []
+    [workerApi]
   );
 
   return (
