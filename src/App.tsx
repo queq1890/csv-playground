@@ -14,9 +14,9 @@ const validateCSV = (csv: File) => {
 
       if (
         idArray.some((id) => {
-          if (!is12DigitsNumeric(id)) return true;
-          return false;
-          // return validIdArray.includes(id);
+          return !is12DigitsNumeric(id);
+
+          // return validIdArray.includes(id); // uniqueness validation
         })
       ) {
         console.log('invalid value detected!');
