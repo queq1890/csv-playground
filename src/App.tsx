@@ -1,26 +1,58 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useCallback } from 'react';
+import Papa from 'papaparse';
 
-function App() {
+const is12DigitsNumeric = (value: string) => {
+  return /^-?\d{12}$/.test(value);
+};
+
+const validateCSV = (csv: File) => {
+  let validIdArray: string[] = [];
+
+  Papa.parse<string>(csv, {
+    chunk: (results, parser) => {
+      const idArray = results.data.flat();
+
+      if (
+        idArray.some((id) => {
+          if (!is12DigitsNumeric(id)) return true;
+          return false;
+          // return validIdArray.includes(id);
+        })
+      ) {
+        console.log('invalid value detected!');
+        parser.abort();
+      }
+      validIdArray = validIdArray.concat(idArray);
+    },
+    complete: () => {
+      console.log('complete');
+      console.log(validIdArray);
+      validIdArray = [];
+    },
+    error: (error) => {
+      console.log(error);
+    },
+    worker: true,
+  });
+};
+
+const App = () => {
+  const handleChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const csv = event.target.files?.[0];
+      if (!csv) return;
+      validateCSV(csv);
+    },
+    []
+  );
+
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <div>
+        <input type="file" accept=".csv" onChange={handleChange} />
+      </div>
     </div>
   );
-}
+};
 
 export default App;
