@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
 import Papa from 'papaparse';
 
+import Worker from './uniquenessValidator.worker';
+
 const is12DigitsNumeric = (value: string) => {
   return /^-?\d{12}$/.test(value);
 };
