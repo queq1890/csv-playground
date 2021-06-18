@@ -1,7 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const fs = require('fs');
 
-const NUMBER_OF_ROWS = 10000000;
+const NUMBER_OF_ROWS = 40000000;
 
 const zeroPadding = (num, length) => {
   return ('0000000000000000000' + num).slice(-length);
